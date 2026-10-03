@@ -1,0 +1,30 @@
+name: Fetch verified PostgreSQL installer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify PostgreSQL 18.6
+        shell: bash
+        run: |
+          set -euo pipefail
+          path="$RUNNER_TEMP/postgresql-18.6-5-windows-x64.exe"
+          curl --fail --location --retry 3 \
+            --output "$path" \
+            'https://get.enterprisedb.com/postgresql/postgresql-18.6-5-windows-x64.exe'
+          echo '227e2bc08091b4c2b8338c7d61b11d057f895711480b006f90bfcfcd2410a58a  '"$path" | sha256sum --check --strict
+          echo "POSTGRESQL_INSTALLER=$path" >> "$GITHUB_ENV"
+
+      - name: Upload verified installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgresql-18.6-windows-x64
+          path: ${{ env.POSTGRESQL_INSTALLER }}
+          if-no-files-found: error
+          retention-days: 1
